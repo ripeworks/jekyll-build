@@ -1,7 +1,7 @@
 jekyll-build
 ============
 
-Jekyll build server written in go.
+Jekyll build server written in go. Uses a `POST` http request to trigger builds, making it useful for webhooks.
 
 Requirements
 ----
@@ -16,8 +16,7 @@ Install
 ----
 
 * Make sure all requirements are installed
-* Move `bin/jekyll-build` somewhere
-* Run the app using foreman/forego
+* `foreman start` or `forego start`
 * Configure nginx to point to it.
 
 Usage
