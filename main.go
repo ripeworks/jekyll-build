@@ -20,8 +20,7 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
 
   url := strings.Split(r.URL.Path, "/")
   host, user, name := url[2], url[3], url[4]
-  // tmp := "/tmp"
-  tmp := "/Users/mkruk/Desktop"
+  tmp := "/tmp"
 
   dir  := tmp + "/src/" + name
   dest := tmp + "/build/" + name
@@ -46,10 +45,9 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
   fmt.Println("-----> Jekyll site built successfully.")
 
   status, message := JekyllPublish(dest)
-  fmt.Println(string(status))
   fmt.Println(message)
 
-  rw.WriteHeader(http.StatusOK)
+  rw.WriteHeader(status)
 }
 
 func JekyllPublish(dir string) (int, string) {
@@ -62,7 +60,7 @@ func JekyllPublish(dir string) (int, string) {
 
   // Sync files to S3
   fmt.Printf("-----> Publishing to Amazon S3 Bucket %s...\n", bucket)
-  out, err := exec.Command("sh", "-c", fmt.Sprintf("s3cmd sync \"%[1]s/\" s3://%[2]s --delete-removed --acl-public", dir, bucket)).Output()
+  out, err := exec.Command("s3cmd", "sync", dir + "/", "s3://" + string(bucket), "--delete-removed", "--acl-public").Output()
   fmt.Printf("%s", out)
   if err != nil {
     fmt.Printf("%s", err)
@@ -71,6 +69,9 @@ func JekyllPublish(dir string) (int, string) {
 
   // TODO Optional - Use rsync to remote web server
   // rsync -avz --delete _site/ location:/var/www/html/jekyll
+
+  // remove build
+  os.Remove(dir)
 
   return 200, "Success"
 }
