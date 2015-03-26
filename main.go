@@ -60,7 +60,15 @@ func JekyllPublish(dir string) (int, string) {
 
   // Sync files to S3
   fmt.Printf("-----> Publishing to Amazon S3 Bucket %s...\n", bucket)
-  out, err := exec.Command("s3cmd", "sync", dir + "/", "s3://" + string(bucket), "--delete-removed", "--acl-public").Output()
+  out, err := exec.Command(
+    "s3cmd",
+    "sync",
+    dir + "/",
+    "s3://" + string(bucket),
+    "--delete-removed",
+    "--acl-public",
+    "--add-header='Cache-Control:max-age=300'",
+  ).Output()
   fmt.Printf("%s", out)
   if err != nil {
     fmt.Printf("%s", err)
