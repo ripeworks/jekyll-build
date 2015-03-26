@@ -67,8 +67,8 @@ func JekyllPublish(dir string) (int, string) {
     "s3://" + string(bucket),
     "--delete-removed",
     "--acl-public",
-    "--add-header='Cache-Control:max-age=300'",
-  ).Output()
+    "--add-header=Cache-Control:max-age=300",
+  ).CombinedOutput()
   fmt.Printf("%s", out)
   if err != nil {
     fmt.Printf("%s", err)
@@ -79,7 +79,7 @@ func JekyllPublish(dir string) (int, string) {
   // rsync -avz --delete _site/ location:/var/www/html/jekyll
 
   // remove build
-  os.Remove(dir)
+  os.RemoveAll(dir)
 
   return 200, "Success"
 }
