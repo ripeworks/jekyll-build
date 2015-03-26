@@ -67,7 +67,7 @@ func JekyllPublish(dir string) (int, string) {
     "s3://" + string(bucket),
     "--delete-removed",
     "--acl-public",
-    "--add-header=Cache-Control:max-age=300",
+    "--add-header=Cache-Control:max-age=60",
   ).CombinedOutput()
   fmt.Printf("%s", out)
   if err != nil {
