@@ -27,15 +27,16 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
   repo := "git@" + host + ":" + user + "/" + name + ".git"
 
   cmd := []string{
-    "git clone %[2]s %[1]s",
-    "cd %[1]s",
+    "git clone %[2]s %[1]s &&",
+    "cd %[1]s;",
     // "git checkout master",
-    "jekyll build -s %[1]s -d %[3]s",
-    "rm -Rf %[1]s"}
+    "[ -f Gemfile ] && bundle install;",
+    "jekyll build -s %[1]s -d %[3]s;",
+    "rm -Rf %[1]s;"}
 
   fmt.Println("-----> Cloning " + repo)
   fmt.Println("-----> Building Jekyll site ...")
-  out, err := exec.Command("sh", "-c", fmt.Sprintf(strings.Join(cmd, " && "), dir, repo, dest)).Output()
+  out, err := exec.Command("sh", "-c", fmt.Sprintf(strings.Join(cmd, " "), dir, repo, dest)).Output()
   if err != nil {
     fmt.Printf("%s", err)
     rw.WriteHeader(http.StatusInternalServerError)
