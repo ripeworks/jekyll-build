@@ -44,10 +44,10 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
     rw.WriteHeader(http.StatusInternalServerError)
     return
   }
-  fmt.Println("-----> Jekyll site built successfully.")
+  log.Println("-----> Jekyll site built successfully.")
 
   status, message := JekyllPublish(dest)
-  fmt.Println(message)
+  log.Println(message)
 
   rw.WriteHeader(status)
 }
@@ -61,7 +61,7 @@ func JekyllPublish(dir string) (int, string) {
   }
 
   // Sync files to S3
-  fmt.Printf("-----> Publishing to Amazon S3 Bucket %s...\n", bucket)
+  log.Println("-----> Publishing to Amazon S3 Bucket %s...\n", bucket)
   out, err := exec.Command(
     "s3cmd",
     "sync",
@@ -71,9 +71,9 @@ func JekyllPublish(dir string) (int, string) {
     "--acl-public",
     "--add-header=Cache-Control:max-age=60",
   ).CombinedOutput()
-  fmt.Printf("%s", out)
+  log.Println("%s", out)
   if err != nil {
-    fmt.Printf("%s", err)
+    log.Println("%s", err)
     return 500, "Problem syncing"
   }
 
