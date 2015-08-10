@@ -4,6 +4,7 @@ import (
   "net/http"
   "os"
   "os/exec"
+  "log"
   "fmt"
   "strings"
 )
@@ -34,15 +35,15 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
     "jekyll build -s %[1]s -d %[3]s;",
     "rm -Rf %[1]s;"}
 
-  fmt.Println("-----> Cloning " + repo)
-  fmt.Println("-----> Building Jekyll site ...")
+  log.Println("-----> Cloning " + repo)
+  log.Println("-----> Building Jekyll site ...")
   out, err := exec.Command("sh", "-c", fmt.Sprintf(strings.Join(cmd, " "), dir, repo, dest)).Output()
+  log.Println(string(out))
   if err != nil {
-    fmt.Printf("%s", err)
+    log.Println("ERROR: %s", err)
     rw.WriteHeader(http.StatusInternalServerError)
     return
   }
-  fmt.Printf("%s", out)
   fmt.Println("-----> Jekyll site built successfully.")
 
   status, message := JekyllPublish(dest)
