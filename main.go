@@ -7,6 +7,7 @@ import (
   "log"
   "fmt"
   "strings"
+  "errors"
 )
 
 /*
@@ -54,10 +55,52 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
 
 func JekyllPublish(dir string) (int, string) {
 
-  // Find S3 Bucket location from the BUCKET file
-  bucket, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && cat BUCKET", dir)).Output()
+  // Determine deployment method from DEPLOY file
+  out, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && tr -d '\r\n' < DEPLOY", dir)).Output()
+  method := string(out)
+
   if err != nil {
-    return 500, "No bucket specified"
+    // default to amazon
+    method = "amazon"
+  }
+
+  if method == "amazon" {
+    err := PublishAmazon(dir)
+    if err != nil { return 500, fmt.Sprint(err) }
+  }
+
+  if method == "surge" {
+    err := PublishSurge(dir)
+    if err != nil { return 500, fmt.Sprint(err) }
+  }
+
+  // if method == "rsync"
+  // TODO Optional - Use rsync to remote web server
+  // rsync -avz --delete _site/ location:/var/www/html/jekyll
+
+  // remove build
+  os.RemoveAll(dir)
+
+  return 200, "Success"
+}
+
+func PublishSurge(dir string) error {
+  log.Printf("-----> Publish to surge.sh")
+
+  out, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && surge .", dir)).Output()
+  log.Printf("%s\n", out)
+  if err != nil {
+    return errors.New("Unable to deploy with Surge")
+  }
+
+  return nil
+}
+
+func PublishAmazon(dir string) error {
+  // Find S3 Bucket location from the BUCKET file
+  bucket, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && tr -d '\r\n' < BUCKET", dir)).Output()
+  if err != nil {
+    return errors.New("No bucket specified")
   }
 
   // Sync files to S3
@@ -74,16 +117,10 @@ func JekyllPublish(dir string) (int, string) {
   log.Printf("%s\n", out)
   if err != nil {
     log.Printf("%s\n", err)
-    return 500, "Problem syncing"
+    return errors.New("Problem syncing")
   }
 
-  // TODO Optional - Use rsync to remote web server
-  // rsync -avz --delete _site/ location:/var/www/html/jekyll
-
-  // remove build
-  os.RemoveAll(dir)
-
-  return 200, "Success"
+  return nil
 }
 
 func main() {
