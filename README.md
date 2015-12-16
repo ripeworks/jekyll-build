@@ -9,8 +9,14 @@ Requirements
 * Something that can run `jekyll build`. See `Dockerfile`
 * git
 * Go
-* rsync _Optional. For publishing to remote server_
-* s3cmd _Optional. For publishing to Amazon S3_
+
+Deploy Techniques
+-----------------
+
+Using a `DEPLOY` file you can specify how you would like jekyll-build to publish your site. By default it will attempt to use Amazon S3.
+
+* __Amazon S3__
+* __surge.sh__
 
 Usage
 ----
