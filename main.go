@@ -7,20 +7,17 @@ import (
   "log"
   "fmt"
   "strings"
-  "errors"
 )
 
-/*
- * POST /build/:host/:user/:name
- */
-func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
-  // webhook must be POST
-  if r.Method != "POST" {
-    rw.WriteHeader(http.StatusNotFound)
-    return
-  }
+const (
+  Route = "/build/"
+  DefaultPort = "8080"
+)
 
-  url := strings.Split(r.URL.Path, "/")
+var queue = make(chan string, 100)
+
+func JekyllBuild(path string) {
+  url := strings.Split(path, "/")
   host, user, name := url[2], url[3], url[4]
   tmp := "/tmp"
 
@@ -36,42 +33,35 @@ func JekyllBuild(rw http.ResponseWriter, r *http.Request) {
     "jekyll build -s %[1]s -d %[3]s;",
     "rm -Rf %[1]s;"}
 
-  log.Println("-----> Cloning " + repo)
-  log.Println("-----> Building Jekyll site ...")
+  info("Cloning " + repo)
+  info("Building Jekyll site ...")
   out, err := exec.Command("sh", "-c", fmt.Sprintf(strings.Join(cmd, " "), dir, repo, dest)).Output()
   log.Printf("%s\n", out)
   if err != nil {
-    log.Printf("ERROR: %s\n", err)
-    rw.WriteHeader(http.StatusInternalServerError)
+    fail("Jekyll Error", err)
     return
   }
-  log.Println("-----> Jekyll site built successfully.")
+  info("Jekyll site built successfully.")
 
-  status, message := JekyllPublish(dest)
-  log.Println(message)
-
-  rw.WriteHeader(status)
+  JekyllPublish(dest)
 }
 
-func JekyllPublish(dir string) (int, string) {
+func JekyllPublish(dir string) {
 
   // Determine deployment method from DEPLOY file
   out, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && tr -d '\r\n' < DEPLOY", dir)).Output()
   method := string(out)
 
   if err != nil {
-    // default to amazon
-    method = "amazon"
+    method = "amazon" // default to Amazon S3
   }
 
   if method == "amazon" {
-    err := PublishAmazon(dir)
-    if err != nil { return 500, fmt.Sprint(err) }
+    err = PublishAmazon(dir)
   }
 
   if method == "surge" {
-    err := PublishSurge(dir)
-    if err != nil { return 500, fmt.Sprint(err) }
+    err = PublishSurge(dir)
   }
 
   // if method == "rsync"
@@ -81,54 +71,50 @@ func JekyllPublish(dir string) (int, string) {
   // remove build
   os.RemoveAll(dir)
 
-  return 200, "Success"
+  if err == nil {
+    info("Success! Jekyll site published.")
+  }
 }
 
-func PublishSurge(dir string) error {
-  log.Printf("-----> Publish to surge.sh")
-
-  out, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && surge .", dir)).Output()
-  log.Printf("%s\n", out)
-  if err != nil {
-    return errors.New("Unable to deploy with Surge")
+/*
+ * POST /build/:host/:user/:name
+ */
+func routeHandler(rw http.ResponseWriter, r *http.Request) {
+  // must be POST
+  if r.Method != "POST" {
+    rw.WriteHeader(http.StatusNotFound)
+    return
   }
 
-  return nil
+  queue <- r.URL.Path
+
+  rw.WriteHeader(http.StatusCreated)
+  return
 }
 
-func PublishAmazon(dir string) error {
-  // Find S3 Bucket location from the BUCKET file
-  bucket, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && tr -d '\r\n' < BUCKET", dir)).Output()
-  if err != nil {
-    return errors.New("No bucket specified")
-  }
-
-  // Sync files to S3
-  log.Printf("-----> Publishing to Amazon S3 Bucket %s...\n", bucket)
-  out, err := exec.Command(
-    "s3cmd",
-    "sync",
-    dir + "/",
-    "s3://" + string(bucket),
-    "--delete-removed",
-    "--acl-public",
-    "--add-header=Cache-Control:max-age=60",
-  ).CombinedOutput()
-  log.Printf("%s\n", out)
-  if err != nil {
-    log.Printf("%s\n", err)
-    return errors.New("Problem syncing")
-  }
-
-  return nil
+// listen for url paths from queue channel
+// and process builds one at a time.
+func workOnQueue() {
+  go func() {
+    for {
+      select {
+      case path := <-queue:
+        info("Processing POST " + path)
+        JekyllBuild(path)
+      }
+    }
+  }()
 }
 
 func main() {
-  http.HandleFunc("/build/", JekyllBuild)
+  // start the queue
+  workOnQueue()
+
+  // listen for requests
+  http.HandleFunc(Route, routeHandler)
   port := os.Getenv("PORT")
-  if port == "" {
-      port = "8080"
-  }
+  if port == "" { port = DefaultPort }
+
   http.ListenAndServe(":"+port, nil)
 }
 
