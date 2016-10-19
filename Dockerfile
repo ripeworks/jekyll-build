@@ -8,7 +8,7 @@ RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
 
 # install gems
-RUN gem install bundler therubyracer github-pages jekyll-fridge
+RUN gem install bundler github-pages jekyll-fridge
 
 # install deployment method (surge)
 RUN npm install -g surge
