@@ -6,9 +6,17 @@ Jekyll build server written in go. Uses a `POST` http request to trigger builds,
 Requirements
 ----
 
-* Something that can run `jekyll build`. See `Dockerfile`
-* git
-* Go
+* docker
+
+Building an Image
+----------------
+
+```bash
+# Compile jekyll-build and build a docker image
+$ make
+# Run a container on port 8080
+$ jekyll run --rm -p 8080:80 jekyll-build
+```
 
 Deploy Techniques
 -----------------
