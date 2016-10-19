@@ -23,6 +23,8 @@ func JekyllBuild(path string) {
 
   dir  := tmp + "/src/" + name
   dest := tmp + "/build/" + name
+  // Default to using git+ssh for cloning.
+  // The commented out line uses https which is great for public repos
   repo := "git@" + host + ":" + user + "/" + name + ".git"
   // repo := "https://" + host + "/" + user + "/" + name + ".git"
 
