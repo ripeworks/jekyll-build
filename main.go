@@ -11,7 +11,7 @@ import (
 
 const (
   Route = "/build/"
-  DefaultPort = "8080"
+  DefaultPort = "80"
 )
 
 var queue = make(chan string, 100)
@@ -24,6 +24,7 @@ func JekyllBuild(path string) {
   dir  := tmp + "/src/" + name
   dest := tmp + "/build/" + name
   repo := "git@" + host + ":" + user + "/" + name + ".git"
+  // repo := "https://" + host + "/" + user + "/" + name + ".git"
 
   cmd := []string{
     "git clone %[2]s %[1]s &&",

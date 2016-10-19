@@ -15,5 +15,5 @@ RUN npm install -g surge
 
 WORKDIR /app
 COPY jekyll-build /app/
-EXPOSE 8080
+EXPOSE 80
 ENTRYPOINT ["./jekyll-build"]
