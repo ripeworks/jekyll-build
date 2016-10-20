@@ -67,9 +67,9 @@ func JekyllPublish(dir string) {
     err = PublishSurge(dir)
   }
 
-  // if method == "rsync"
-  // TODO Optional - Use rsync to remote web server
-  // rsync -avz --delete _site/ location:/var/www/html/jekyll
+  if method == "rsync" {
+    err = PublishRsync(dir)
+  }
 
   // remove build
   os.RemoveAll(dir)
