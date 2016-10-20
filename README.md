@@ -3,11 +3,6 @@ jekyll-build
 
 Jekyll build server written in go. Uses a `POST` http request to trigger builds, making it useful for webhooks. A simple `Dockerfile` has been provided with all necessary dependencies to run `jekyll build`.
 
-Requirements
-----
-
-* docker
-
 Building an Image
 ----------------
 
@@ -17,6 +12,11 @@ $ make
 # Run a container on port 8080
 $ docker run --rm -p 8080:80 jekyll-build
 ```
+
+Docker Registry
+---------------
+
+Jekyll build is on Docker's public registry! `docker pull ripeworks/jekyll-build:latest`
 
 Deploy Techniques
 -----------------
@@ -54,3 +54,33 @@ By default successfully built sites will be synced to an Amazon S3 Bucket. Speci
 ### Permissions
 
 The user running jekyll-build must have proper permissions to access the repository specified, as well as a configured `s3cmd` client.
+
+### Private Repositories
+
+If you plan to automate builds using private repositories, there are a few ways to handle authentication.
+
+#### SSH Keys
+
+Perhaps the easiest way is to provide a private key to the docker container that has read access to the git repository.
+
+Example:
+
+```bash
+$ docker run --rm -p 8080:80 -v ~/.ssh/id_rsa:/root/.ssh/id_rsa jekyll-build
+```
+
+#### .netrc
+
+If the git repository supports cloning over https (github, gitlab, bitbucket), you could alternatively provide authentication using `.netrc`. It does require storing credentials/tokens in plaintext so take caution.
+
+Example:
+
+```
+machine github.com
+  login TOKEN
+  password
+```
+
+```bash
+$ docker run --rm -p 8080:80 -v ~/.netrc:/root/.netrc jekyll-build
+```
