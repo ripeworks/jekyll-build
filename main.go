@@ -11,7 +11,7 @@ import (
 
 const (
   Route = "/build/"
-  DefaultPort = "80"
+  DefaultPort = "8080"
 )
 
 var queue = make(chan string, 100)
