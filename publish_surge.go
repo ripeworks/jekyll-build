@@ -1,7 +1,6 @@
 package main
 
 import (
-  "fmt"
   "log"
   "os/exec"
 )
@@ -14,7 +13,7 @@ import (
 func PublishSurge(dir string) error {
   info("Publish to surge.sh")
 
-  out, err := exec.Command("sh", "-c", fmt.Sprintf("cd %s && surge .", dir)).Output()
+  out, err := exec.Command("surge", dir).Output()
   log.Printf("%s\n", out)
   if err != nil {
     return fail("Unable to deploy using surge", err)
